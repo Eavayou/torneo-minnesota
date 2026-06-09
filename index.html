@@ -1,4 +1,3 @@
-initFirebase();
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -15,7 +14,6 @@ initFirebase();
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
   const firebaseConfig = {
     apiKey: "AIzaSyAuSravpq7SGUkPDkaHYTKjNNA9mWbR1oY",
     authDomain: "torneo-minnesota.firebaseapp.com",
@@ -25,12 +23,9 @@ initFirebase();
     messagingSenderId: "1042453223744",
     appId: "1:1042453223744:web:6087d246cedb0f68d202a5"
   };
-
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const dbRef = ref(db, 'torneo');
-
-  // Exponer funciones de Firebase al scope global
   window._fbSet = (data) => set(dbRef, data);
   window._fbListen = (cb) => onValue(dbRef, snap => cb(snap.val()));
 </script>
@@ -123,12 +118,14 @@ html,body{height:100%;background:#f0f4f0;font-family:-apple-system,BlinkMacSyste
 .toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 16px);left:50%;transform:translateX(-50%);background:rgba(30,30,28,.92);color:#fff;border-radius:var(--radius);padding:10px 20px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw}
 .toast.show{opacity:1}
 .kid-count{font-size:11px;color:var(--text2);background:var(--gray);border-radius:var(--radius-full);padding:2px 8px;font-weight:600}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;margin-left:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="topbar"><div class="topbar-inner">
-    <div class="topbar-title">⚽ Torneo Minnesota 2025</div>
+    <div class="topbar-title">⚽ Torneo Minnesota 2025 <span class="sync-dot" title="Sincronizado"></span></div>
     <div class="topbar-totals" id="topbar"></div>
   </div></div>
   <div class="toolbar">
@@ -162,11 +159,10 @@ function save(){
   if(!window._fbSet)return;
   _saving=true;
   window._fbSet(JSON.parse(JSON.stringify(S)))
-    .catch(e=>console.error('Firebase save error:',e))
-    .finally(()=>{ _saving=false; });
+    .catch(e=>console.error('Firebase error:',e))
+    .finally(()=>{setTimeout(()=>{_saving=false;},500);});
 }
 
-// Escuchar cambios en tiempo real desde Firebase
 function initFirebase(){
   const poll=setInterval(()=>{
     if(!window._fbListen)return;
@@ -175,13 +171,13 @@ function initFirebase(){
       if(_saving)return;
       if(data){
         S=data;
-        // Asegurar que expenses sea array
         S.kids=S.kids.map(k=>({...k,expenses:k.expenses||[]}));
       }
       render();
     });
   },200);
 }
+
 function sp(k){return k.expenses.reduce((a,e)=>a+e.amount,0);}
 function re(k){return k.budget-sp(k);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
