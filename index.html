@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torneo MN">
+<meta name="theme-color" content="#0F6E56">
+<title>⚽ Torneo Minnesota 2025</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html,body{height:100%;background:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;overscroll-behavior:none}
+:root{--green:#1D9E75;--green-d:#0F6E56;--green-l:#E1F5EE;--blue:#185FA5;--blue-l:#E6F1FB;--red:#E24B4A;--red-l:#FCEBEB;--amber:#BA7517;--amber-l:#FAEEDA;--gray:#f7f7f5;--border:#e0e0dc;--text:#1a1a1a;--text2:#6b7280;--white:#ffffff;--radius:12px;--radius-sm:8px;--radius-full:999px}
+.app{max-width:430px;margin:0 auto;padding:0 0 110px;min-height:100vh}
+.topbar{background:linear-gradient(160deg,var(--green-d),var(--blue));padding:env(safe-area-inset-top,0) 0 0;color:#fff}
+.topbar-inner{padding:14px 16px 16px}
+.topbar-title{font-size:16px;font-weight:600;opacity:.9;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.topbar-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tstat{background:rgba(255,255,255,.18);border-radius:var(--radius-sm);padding:9px 6px;text-align:center}
+.tstat-val{font-size:20px;font-weight:700;line-height:1}
+.tstat-lbl{font-size:10px;opacity:.75;margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 4px}
+.section-lbl{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em;text-transform:uppercase}
+.toolbar-actions{display:flex;gap:8px}
+.reset-btn{font-size:11px;color:var(--text2);background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;cursor:pointer}
+.add-kid-btn{font-size:12px;font-weight:700;color:#fff;background:var(--green);border:none;border-radius:var(--radius-sm);padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.add-kid-btn:active{opacity:.85}
+.kids-list{padding:0 10px;display:flex;flex-direction:column;gap:8px}
+.kid-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:12px 12px 11px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:background .12s;user-select:none}
+.kid-card:active{background:#f5f5f3}
+.avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--green-l)}
+.kid-info{flex:1;min-width:0}
+.kid-name-row{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.kid-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.budget-badge{font-size:10px;background:var(--blue-l);color:#0C447C;border-radius:4px;padding:2px 6px;font-weight:600;flex-shrink:0}
+.kid-bar-wrap{height:5px;background:#e8e8e4;border-radius:3px;margin:5px 0 4px}
+.kid-bar{height:5px;border-radius:3px;transition:width .4s ease}
+.kid-amounts{display:flex;justify-content:space-between;font-size:11px;color:var(--text2)}
+.add-btn{width:46px;height:46px;border-radius:50%;border:none;font-size:26px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;font-weight:300;transition:transform .1s,opacity .1s}
+.add-btn:active{transform:scale(.9);opacity:.85}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;backdrop-filter:blur(2px)}
+.sheet{background:var(--white);border-radius:20px 20px 0 0;padding:0 16px calc(env(safe-area-inset-bottom,0px) + 32px);width:100%;max-width:430px;max-height:93vh;overflow-y:auto}
+.sheet-pad{padding-top:18px}
+.handle{width:38px;height:4px;background:#d1d1cc;border-radius:2px;margin:14px auto 0;cursor:pointer}
+.sheet-title{font-size:17px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.sheet-sub{font-size:12px;color:var(--text2);margin-bottom:14px}
+.cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.cat-btn{padding:12px 10px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--white);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--text);transition:all .15s;width:100%}
+.cat-btn.sel{border-color:var(--green);background:var(--green-l);color:var(--green-d)}
+.cat-icon{font-size:18px;line-height:1}
+.amount-input{width:100%;font-size:28px;font-weight:700;padding:14px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--gray);color:var(--text);text-align:center;margin-bottom:10px;outline:none;transition:border-color .15s}
+.amount-input:focus{border-color:var(--green);background:var(--white)}
+.note-input{width:100%;padding:12px 14px;font-size:14px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--gray);color:var(--text);margin-bottom:16px;outline:none;transition:border-color .15s}
+.note-input:focus{border-color:var(--green);background:var(--white)}
+.text-input-lg{width:100%;font-size:18px;font-weight:600;padding:14px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--gray);color:var(--text);margin-bottom:10px;outline:none;transition:border-color .15s}
+.text-input-lg:focus{border-color:var(--green);background:var(--white)}
+.budget-input{flex:1;font-size:17px;font-weight:700;padding:10px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--white);color:var(--text);text-align:center;outline:none;transition:border-color .15s}
+.budget-input:focus{border-color:var(--green)}
+.btn-primary{width:100%;padding:16px;font-size:16px;font-weight:700;border:none;border-radius:var(--radius);color:#fff;cursor:pointer;background:var(--green);transition:opacity .15s;letter-spacing:.01em}
+.btn-primary:active{opacity:.85}
+.btn-secondary{width:100%;padding:13px;font-size:15px;font-weight:500;border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;background:var(--white);margin-top:9px;transition:background .12s}
+.btn-secondary:active{background:var(--gray)}
+.btn-danger{width:100%;padding:13px;font-size:15px;font-weight:500;border:1.5px solid #fca5a5;border-radius:var(--radius);color:var(--red);cursor:pointer;background:var(--red-l);margin-top:9px}
+.btn-danger:active{opacity:.8}
+.btn-wa{background:#25D366;color:#fff;border:none}
+.btn-copy{background:var(--blue);color:#fff;border:none}
+.save-budget-btn{padding:10px 16px;font-size:14px;font-weight:700;border:none;border-radius:var(--radius-sm);background:var(--green);color:#fff;cursor:pointer;white-space:nowrap}
+.save-budget-btn:active{opacity:.8}
+.budget-edit-box{background:var(--gray);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;border:1px solid var(--border)}
+.budget-edit-box label{font-size:13px;color:var(--text2);white-space:nowrap;font-weight:500}
+.dstat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
+.dstat{background:var(--gray);border-radius:var(--radius-sm);padding:11px;text-align:center;border:1px solid var(--border)}
+.dstat-val{font-size:20px;font-weight:700;line-height:1}
+.dstat-lbl{font-size:11px;color:var(--text2);margin-top:3px;font-weight:500}
+.edit-input{font-size:16px;font-weight:700;border:none;border-bottom:2px solid var(--green);background:transparent;color:var(--text);width:100%;padding:2px 0;outline:none}
+.txn-section-lbl{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;letter-spacing:.05em;text-transform:uppercase}
+.txn-list{display:flex;flex-direction:column}
+.txn-item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f0f0ec}
+.txn-item:last-child{border-bottom:none}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.txn-info{flex:1;min-width:0}
+.txn-cat{font-size:13px;font-weight:600;color:var(--text)}
+.txn-note{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txn-time{font-size:11px;color:#9ca3af;margin-top:1px}
+.txn-amt{font-size:15px;font-weight:700;color:var(--text);flex-shrink:0}
+.del-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;transition:all .15s}
+.del-btn:active{background:var(--red-l);color:var(--red);border-color:var(--red)}
+.export-text{background:var(--gray);border-radius:var(--radius-sm);padding:14px;font-size:11.5px;font-family:'Courier New',monospace;white-space:pre-wrap;color:var(--text);max-height:260px;overflow-y:auto;margin-bottom:14px;line-height:1.65;border:1px solid var(--border)}
+.fab{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);right:16px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-full);padding:13px 22px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;z-index:100;box-shadow:0 4px 16px rgba(24,95,165,.35);transition:transform .1s}
+.fab:active{transform:scale(.95)}
+.empty{text-align:center;padding:32px 16px;color:var(--text2);font-size:14px}
+.empty-list{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty-list-icon{font-size:48px;margin-bottom:12px}
+.empty-list-txt{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-list-sub{font-size:13px}
+.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 16px);left:50%;transform:translateX(-50%);background:rgba(30,30,28,.92);color:#fff;border-radius:var(--radius);padding:10px 20px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+.kid-count{font-size:11px;color:var(--text2);background:var(--gray);border-radius:var(--radius-full);padding:2px 8px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><div class="topbar-inner">
+    <div class="topbar-title">⚽ Torneo Minnesota 2025</div>
+    <div class="topbar-totals" id="topbar"></div>
+  </div></div>
+  <div class="toolbar">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="section-lbl">Jugadores</span>
+      <span class="kid-count" id="kidCount">0</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="reset-btn" onclick="confirmReset()">↺ Reiniciar</button>
+      <button class="add-kid-btn" onclick="openAddKid()">+ Agregar</button>
+    </div>
+  </div>
+  <div style="height:4px"></div>
+  <div class="kids-list" id="kidsList"></div>
+</div>
+<button class="fab" onclick="openExport()">↑ Exportar</button>
+<div id="OC"></div>
+<div id="toastEl" class="toast"></div>
+
+<script>
+// Forzar recarga si hay versión cacheada
+(function(){
+  var v='torneo-mn-v4';
+  if(localStorage.getItem('app-version')!==v){
+    localStorage.removeItem('torneoMN25v3');
+    localStorage.setItem('app-version',v);
+  }
+})();
+
+const MAX=300;
+const AV=['⚽','🏆','🥅','👟','🎽','🧤','🥇','🌟','🔥','🎯','💪','⭐','🦁','🐯','🦊','🐺','🦅','🎖️','🏅','🎪'];
+const CC={Comida:'#1D9E75',Entrada:'#185FA5',Transporte:'#BA7517',Tienda:'#8B5CF6',Otro:'#888780'};
+const CI={Comida:'🍔',Entrada:'🎟️',Transporte:'🚌',Tienda:'🛍️',Otro:'•••'};
+const CATS=['Comida','Entrada','Transporte','Tienda','Otro'];
+
+let S={kids:Array.from({length:9},(_,i)=>({id:i+1,name:'Jugador '+(i+1),budget:MAX,expenses:[]})),nextId:10};
+
+function load(){try{const s=localStorage.getItem('torneoMN25v3');if(s)S=JSON.parse(s);}catch(e){}}
+function save(){try{localStorage.setItem('torneoMN25v3',JSON.stringify(S));}catch(e){}}
+function sp(k){return k.expenses.reduce((a,e)=>a+e.amount,0);}
+function re(k){return k.budget-sp(k);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function ft(ts){const d=new Date(ts);return d.toLocaleDateString('es-MX',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});}
+function avIdx(id){return(id-1)%AV.length;}
+
+function renderTop(){
+  const tR=S.kids.reduce((a,k)=>a+re(k),0);
+  const tS=S.kids.reduce((a,k)=>a+sp(k),0);
+  const tB=S.kids.reduce((a,k)=>a+k.budget,0);
+  document.getElementById('topbar').innerHTML=`
+    <div class="tstat"><div class="tstat-val">$${tR.toFixed(0)}</div><div class="tstat-lbl">Restante</div></div>
+    <div class="tstat"><div class="tstat-val">$${tS.toFixed(0)}</div><div class="tstat-lbl">Gastado</div></div>
+    <div class="tstat"><div class="tstat-val">$${tB.toFixed(0)}</div><div class="tstat-lbl">Presupuesto</div></div>`;
+  document.getElementById('kidCount').textContent=S.kids.length;
+}
+
+function renderKids(){
+  if(S.kids.length===0){
+    document.getElementById('kidsList').innerHTML=`
+      <div class="empty-list">
+        <div class="empty-list-icon">👥</div>
+        <div class="empty-list-txt">Sin jugadores aún</div>
+        <div class="empty-list-sub">Toca "+ Agregar" para añadir al primer jugador</div>
+      </div>`;
+    return;
+  }
+  document.getElementById('kidsList').innerHTML=S.kids.map(k=>{
+    const s=sp(k),r=re(k);
+    const pct=Math.max(0,Math.min(100,(r/k.budget)*100));
+    const dng=r<k.budget*.1,low=r<k.budget*.25;
+    const col=dng?'#E24B4A':low?'#BA7517':'#1D9E75';
+    const diff=k.budget<MAX;
+    return `<div class="kid-card" onclick="openDetail(${k.id})">
+      <div class="avatar">${AV[avIdx(k.id)]}</div>
+      <div class="kid-info">
+        <div class="kid-name-row">
+          <div class="kid-name">${esc(k.name)}</div>
+          ${diff?`<span class="budget-badge">$${k.budget}</span>`:''}
+        </div>
+        <div class="kid-bar-wrap"><div class="kid-bar" style="width:${pct}%;background:${col}"></div></div>
+        <div class="kid-amounts">
+          <span>Gastado: <b>$${s.toFixed(0)}</b></span>
+          <span style="color:${col};font-weight:700">Resta: $${r.toFixed(0)}</span>
+        </div>
+      </div>
+      <button class="add-btn" style="background:${col}" onclick="event.stopPropagation();openAdd(${k.id})" aria-label="Agregar gasto">+</button>
+    </div>`;
+  }).join('');
+}
+
+function render(){renderTop();renderKids();}
+
+let selCat='Comida';
+
+function openAddKid(){
+  document.getElementById('OC').innerHTML=`
+    <div class="overlay" onclick="cov(event)">
+      <div class="sheet">
+        <div class="handle" onclick="fcov()"></div>
+        <div class="sheet-pad">
+          <div class="sheet-title">➕ Agregar jugador</div>
+          <div class="sheet-sub">Ingresa el nombre y presupuesto del nuevo jugador</div>
+          <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Nombre</label>
+          <input class="text-input-lg" type="text" id="newName" placeholder="Nombre del jugador" maxlength="30" autocomplete="off">
+          <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Presupuesto (máx. $${MAX})</label>
+          <input class="amount-input" type="number" inputmode="decimal" id="newBudget" placeholder="$${MAX}" value="${MAX}" min="1" max="${MAX}" step="5">
+          <button class="btn-primary" onclick="doAddKid()">✓ Agregar jugador</button>
+          <button class="btn-secondary" onclick="fcov()">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(()=>{const i=document.getElementById('newName');if(i)i.focus();},80);
+}
+
+function doAddKid(){
+  const name=(document.getElementById('newName').value||'').trim();
+  const budget=parseFloat(document.getElementById('newBudget').value)||MAX;
+  if(!name){toast('Ingresa el nombre del jugador');return;}
+  if(budget<=0||budget>MAX){toast('Presupuesto debe ser entre $1 y $'+MAX);return;}
+  const id=S.nextId++;
+  S.kids.push({id,name,budget:Math.round(budget*100)/100,expenses:[]});
+  save();fcov();render();
+  toast('¡'+name+' agregado! 👋');
+}
+
+function openAdd(id){
+  const k=S.kids.find(x=>x.id===id);
+  selCat='Comida';
+  document.getElementById('OC').innerHTML=`
+    <div class="overlay" onclick="cov(event)">
+      <div class="sheet">
+        <div class="handle" onclick="fcov()"></div>
+        <div class="sheet-pad">
+          <div class="sheet-title">Registrar gasto</div>
+          <div class="sheet-sub">${AV[avIdx(id)]} ${esc(k.name)} · Resta: $${re(k).toFixed(2)} de $${k.budget}</div>
+          <div class="cat-grid">${CATS.map(c=>`
+            <button class="cat-btn${c==='Comida'?' sel':''}" onclick="sc('${c}')" id="cb_${c}">
+              <span class="cat-icon">${CI[c]}</span>${c}
+            </button>`).join('')}</div>
+          <input class="amount-input" type="number" inputmode="decimal" placeholder="$0.00" id="amtIn" min="0.01" max="${re(k)}" step="0.50">
+          <input class="note-input" type="text" placeholder="Nota rápida (opcional)" id="noteIn" maxlength="60">
+          <button class="btn-primary" onclick="doAdd(${id})">✓ Registrar gasto</button>
+          <button class="btn-secondary" onclick="fcov()">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(()=>{const i=document.getElementById('amtIn');if(i){i.focus();i.select();}},80);
+}
+
+function sc(c){
+  selCat=c;
+  CATS.forEach(x=>{const b=document.getElementById('cb_'+x);if(b)b.className='cat-btn'+(x===c?' sel':'');});
+}
+
+function doAdd(id){
+  const v=parseFloat(document.getElementById('amtIn').value);
+  const n=(document.getElementById('noteIn').value||'').trim();
+  if(!v||v<=0){toast('Ingresa un monto válido');return;}
+  const k=S.kids.find(x=>x.id===id);
+  if(v>re(k)+.01){toast('Excede el saldo disponible ($'+re(k).toFixed(2)+')');return;}
+  k.expenses.push({id:Date.now(),cat:selCat,amount:v,note:n,ts:Date.now()});
+  save();fcov();render();
+  toast('$'+v.toFixed(2)+' registrado ✓');
+}
+
+function openDetail(id){
+  const k=S.kids.find(x=>x.id===id);
+  const s=sp(k),r=re(k);
+  const dng=r<k.budget*.1,low=r<k.budget*.25;
+  const col=dng?'#E24B4A':low?'#BA7517':'#1D9E75';
+  document.getElementById('OC').innerHTML=`
+    <div class="overlay" onclick="cov(event)">
+      <div class="sheet">
+        <div class="handle" onclick="fcov()"></div>
+        <div class="sheet-pad">
+          <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+            <div class="avatar" style="width:50px;height:50px;font-size:22px">${AV[avIdx(id)]}</div>
+            <div style="flex:1">
+              <input class="edit-input" value="${esc(k.name)}" id="nameEd" maxlength="30" onchange="updName(${id},this.value)" placeholder="Nombre">
+              <div style="font-size:11px;color:#9ca3af;margin-top:4px">${k.expenses.length} gasto${k.expenses.length!==1?'s':''} registrados</div>
+            </div>
+            <button class="add-btn" style="background:${col};width:42px;height:42px;font-size:24px" onclick="fcov();openAdd(${id})">+</button>
+          </div>
+          <div class="budget-edit-box">
+            <label>💰 Presupuesto:</label>
+            <input class="budget-input" type="number" inputmode="decimal" id="budgIn" value="${k.budget}" min="1" max="${MAX}" step="5">
+            <button class="save-budget-btn" onclick="saveBudget(${id})">✓ OK</button>
+          </div>
+          <div class="dstat-grid">
+            <div class="dstat"><div class="dstat-val" style="color:${col}">$${r.toFixed(0)}</div><div class="dstat-lbl">Restante</div></div>
+            <div class="dstat"><div class="dstat-val">$${s.toFixed(0)}</div><div class="dstat-lbl">Gastado</div></div>
+          </div>
+          <div class="txn-section-lbl">Historial de gastos</div>
+          ${k.expenses.length===0
+            ?'<div class="empty">Sin gastos registrados aún</div>'
+            :`<div class="txn-list">${[...k.expenses].reverse().map(e=>`
+              <div class="txn-item">
+                <div class="dot" style="background:${CC[e.cat]||'#888'}"></div>
+                <div class="txn-info">
+                  <div class="txn-cat">${CI[e.cat]||'•'} ${e.cat}</div>
+                  ${e.note?`<div class="txn-note">${esc(e.note)}</div>`:''}
+                  <div class="txn-time">${ft(e.ts)}</div>
+                </div>
+                <div class="txn-amt">$${e.amount.toFixed(2)}</div>
+                <button class="del-btn" onclick="delExp(${id},${e.id})">🗑</button>
+              </div>`).join('')}</div>`}
+          <button class="btn-danger" onclick="confirmRemoveKid(${id})">🗑 Eliminar jugador</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function confirmRemoveKid(id){
+  const k=S.kids.find(x=>x.id===id);
+  if(confirm('¿Eliminar a '+k.name+' y todos sus gastos?\n\nEsta acción no se puede deshacer.')){
+    S.kids=S.kids.filter(x=>x.id!==id);
+    save();fcov();render();
+    toast(k.name+' eliminado');
+  }
+}
+
+function saveBudget(id){
+  const v=parseFloat(document.getElementById('budgIn').value);
+  if(!v||v<=0||v>MAX){toast('El presupuesto debe ser entre $1 y $'+MAX);return;}
+  const k=S.kids.find(x=>x.id===id);
+  if(v<sp(k)){toast('No puede ser menor a lo ya gastado ($'+sp(k).toFixed(2)+')');return;}
+  k.budget=Math.round(v*100)/100;
+  save();render();openDetail(id);
+  toast('Presupuesto actualizado a $'+k.budget+' ✓');
+}
+
+function updName(id,val){
+  const k=S.kids.find(x=>x.id===id);
+  k.name=val.trim()||k.name;
+  save();render();
+}
+
+function delExp(id,eid){
+  const k=S.kids.find(x=>x.id===id);
+  k.expenses=k.expenses.filter(e=>e.id!==eid);
+  save();render();openDetail(id);
+}
+
+function openExport(){
+  const lines=['⚽ TORNEO MINNESOTA 2025','Resumen de gastos','──────────────────────'];
+  S.kids.forEach(k=>{
+    const s=sp(k),r=re(k);
+    const p=Math.round((r/k.budget)*10);
+    const bar='█'.repeat(Math.max(0,p))+'░'.repeat(Math.max(0,10-p));
+    lines.push('\n'+AV[avIdx(k.id)]+' '+k.name+' (presup. $'+k.budget+')');
+    lines.push('   Gastado: $'+s.toFixed(2)+'  |  Resta: $'+r.toFixed(2));
+    lines.push('   ['+bar+']');
+    k.expenses.forEach(e=>lines.push('   • '+e.cat+': $'+e.amount.toFixed(2)+(e.note?' ('+e.note+')':'')));
+  });
+  const tS=S.kids.reduce((a,k)=>a+sp(k),0);
+  const tR=S.kids.reduce((a,k)=>a+re(k),0);
+  const tB=S.kids.reduce((a,k)=>a+k.budget,0);
+  lines.push('\n──────────────────────');
+  lines.push('TOTAL GRUPO ('+S.kids.length+' jugadores)');
+  lines.push('Presupuesto: $'+tB.toFixed(0)+'  |  Gastado: $'+tS.toFixed(2)+'  |  Resta: $'+tR.toFixed(2));
+  lines.push('Generado: '+new Date().toLocaleString('es-MX'));
+  const txt=lines.join('\n');
+  window._expTxt=txt;
+  document.getElementById('OC').innerHTML=`
+    <div class="overlay" onclick="cov(event)">
+      <div class="sheet">
+        <div class="handle" onclick="fcov()"></div>
+        <div class="sheet-pad">
+          <div class="sheet-title">Exportar resumen</div>
+          <div class="sheet-sub">Copia o envía por WhatsApp a los papás</div>
+          <pre class="export-text">${esc(txt)}</pre>
+          <button class="btn-primary btn-copy" onclick="cpTxt()">📋 Copiar al portapapeles</button>
+          <button class="btn-secondary btn-wa" onclick="sendWA()">💬 Enviar por WhatsApp</button>
+          <button class="btn-secondary" onclick="fcov()">Cerrar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function cpTxt(){
+  if(navigator.clipboard&&window._expTxt){
+    navigator.clipboard.writeText(window._expTxt).then(()=>toast('¡Copiado al portapapeles!')).catch(()=>fallbackCopy());
+  }else{fallbackCopy();}
+}
+function fallbackCopy(){
+  const ta=document.createElement('textarea');
+  ta.value=window._expTxt||'';
+  ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('¡Copiado!');}catch(e){toast('Selecciona el texto manualmente');}
+  document.body.removeChild(ta);
+}
+function sendWA(){window.open('https://wa.me/?text='+encodeURIComponent(window._expTxt||''),'_blank');}
+function cov(e){if(e.target.classList.contains('overlay'))fcov();}
+function fcov(){document.getElementById('OC').innerHTML='';}
+function toast(m){const t=document.getElementById('toastEl');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+function confirmReset(){
+  if(confirm('¿Reiniciar completamente?\n\nSe borrarán todos los jugadores, gastos y presupuestos. Quedará como nueva.')){
+    S={kids:Array.from({length:9},(_,i)=>({id:i+1,name:'Jugador '+(i+1),budget:MAX,expenses:[]})),nextId:10};
+    save();render();toast('App reiniciada');
+  }
+}
+
+load();render();
+</script>
+</body>
+</html>
