@@ -125,7 +125,7 @@ html,body{height:100%;background:#f0f4f0;font-family:-apple-system,BlinkMacSyste
 <body>
 <div class="app">
   <div class="topbar"><div class="topbar-inner">
-    <div class="topbar-title">⚽ Torneo Minnesota 2025 <span class="sync-dot" title="Sincronizado"></span></div>
+    <div class="topbar-title">⚽ Torneo Minnesota 2025 <span class="sync-dot"></span></div>
     <div class="topbar-totals" id="topbar"></div>
   </div></div>
   <div class="toolbar">
@@ -151,29 +151,52 @@ const AV=['⚽','🏆','🥅','👟','🎽','🧤','🥇','🌟','🔥','🎯','
 const CC={Comida:'#1D9E75',Entrada:'#185FA5',Transporte:'#BA7517',Tienda:'#8B5CF6',Otro:'#888780'};
 const CI={Comida:'🍔',Entrada:'🎟️',Transporte:'🚌',Tienda:'🛍️',Otro:'•••'};
 const CATS=['Comida','Entrada','Transporte','Tienda','Otro'];
+const LS_KEY='torneoMN25v5';
 
 let S={kids:Array.from({length:9},(_,i)=>({id:i+1,name:'Jugador '+(i+1),budget:MAX,expenses:[]})),nextId:10};
 let _saving=false;
 
+function lsSave(data){try{localStorage.setItem(LS_KEY,JSON.stringify(data));}catch(e){}}
+function lsLoad(){try{const d=localStorage.getItem(LS_KEY);return d?JSON.parse(d):null;}catch(e){return null;}}
+
 function save(){
+  const data=JSON.parse(JSON.stringify(S));
+  lsSave(data);
   if(!window._fbSet)return;
   _saving=true;
-  window._fbSet(JSON.parse(JSON.stringify(S)))
+  window._fbSet(data)
     .catch(e=>console.error('Firebase error:',e))
-    .finally(()=>{setTimeout(()=>{_saving=false;},500);});
+    .finally(()=>{setTimeout(()=>{_saving=false;},600);});
 }
 
 function initFirebase(){
+  // Cargar localStorage inmediatamente
+  const local=lsLoad();
+  if(local){
+    S=local;
+    S.kids=S.kids.map(k=>({...k,expenses:k.expenses||[]}));
+    render();
+  }
+  // Luego conectar Firebase y sincronizar
   const poll=setInterval(()=>{
     if(!window._fbListen)return;
     clearInterval(poll);
     window._fbListen(data=>{
       if(_saving)return;
       if(data){
-        S=data;
-        S.kids=S.kids.map(k=>({...k,expenses:k.expenses||[]}));
+        // Usar Firebase solo si es más reciente (más gastos o jugadores)
+        const fbTotal=(data.kids||[]).reduce((a,k)=>a+(k.expenses||[]).length,0);
+        const lsTotal=(S.kids||[]).reduce((a,k)=>a+(k.expenses||[]).length,0);
+        if(fbTotal>=lsTotal){
+          S=data;
+          S.kids=S.kids.map(k=>({...k,expenses:k.expenses||[]}));
+          lsSave(S);
+          render();
+        }
+      } else {
+        // Firebase vacío — subir datos locales
+        save();
       }
-      render();
     });
   },200);
 }
@@ -230,7 +253,6 @@ function renderKids(){
 }
 
 function render(){renderTop();renderKids();}
-
 let selCat='Comida';
 
 function openAddKid(){
