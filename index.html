@@ -1,4 +1,5 @@
-!DOCTYPE html>
+
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -120,9 +121,7 @@ html,body{height:100%;background:#f0f4f0;font-family:-apple-system,BlinkMacSyste
 .kid-count{font-size:11px;color:var(--text2);background:var(--gray);border-radius:var(--radius-full);padding:2px 8px;font-weight:600}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-left:6px;transition:background .5s}
 .sync-dot.ok{background:#4ade80}
-.loading{text-align:center;padding:60px 20px;color:var(--text2)}
-.loading-icon{font-size:40px;margin-bottom:12px;animation:spin 1.5s linear infinite;display:inline-block}
-@keyframes spin{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:60px 20px;color:var(--text2);font-size:15px}
 </style>
 </head>
 <body>
@@ -142,9 +141,7 @@ html,body{height:100%;background:#f0f4f0;font-family:-apple-system,BlinkMacSyste
     </div>
   </div>
   <div style="height:4px"></div>
-  <div class="kids-list" id="kidsList">
-    <div class="loading"><div class="loading-icon">⚽</div><br>Cargando datos...</div>
-  </div>
+  <div class="kids-list" id="kidsList"><div class="loading">⏳ Cargando jugadores...</div></div>
 </div>
 <button class="fab" onclick="openExport()">↑ Exportar</button>
 <div id="OC"></div>
@@ -157,52 +154,53 @@ const CC={Comida:'#1D9E75',Entrada:'#185FA5',Transporte:'#BA7517',Tienda:'#8B5CF
 const CI={Comida:'🍔',Entrada:'🎟️',Transporte:'🚌',Tienda:'🛍️',Otro:'•••'};
 const CATS=['Comida','Entrada','Transporte','Tienda','Otro'];
 
-let S={kids:Array.from({length:9},(_,i)=>({id:i+1,name:'Jugador '+(i+1),budget:MAX,expenses:[]})),nextId:10};
+let S=null;
 let _saving=false;
-let _fbReady=false;
 
-function save(){
-  if(!window._fbSet){toast('Sin conexión, reintentando...');return;}
-  _saving=true;
-  window._fbSet(JSON.parse(JSON.stringify(S)))
-    .then(()=>{setSyncOk();})
-    .catch(e=>{console.error('Firebase error:',e);toast('Error al guardar, intenta de nuevo');})
-    .finally(()=>{setTimeout(()=>{_saving=false;},800);});
+function normalize(data){
+  if(!data||!data.kids)return null;
+  return {
+    ...data,
+    kids:data.kids.map(k=>({...k,expenses:Array.isArray(k.expenses)?k.expenses:(k.expenses?Object.values(k.expenses):[])}))
+  };
 }
 
-function setSyncOk(){
-  const d=document.getElementById('syncDot');
-  if(d){d.classList.add('ok');}
+function save(){
+  if(!window._fbSet)return;
+  _saving=true;
+  window._fbSet(JSON.parse(JSON.stringify(S)))
+    .then(()=>{document.getElementById('syncDot').classList.add('ok');})
+    .catch(e=>console.error('Firebase error:',e))
+    .finally(()=>{setTimeout(()=>{_saving=false;},800);});
 }
 
 function initFirebase(){
   const poll=setInterval(()=>{
     if(!window._fbListen)return;
     clearInterval(poll);
-    // Primera lectura — esperar datos de Firebase antes de mostrar cualquier cosa
     window._fbListen(data=>{
       if(_saving)return;
-      if(data&&data.kids){
-        S=data;
-        S.kids=S.kids.map(k=>({...k,expenses:k.expenses||[]}));
-      } else if(!_fbReady){
-        // Firebase vacío por primera vez — guardar estado inicial
-        save();
+      const norm=normalize(data);
+      if(norm){
+        S=norm;
+      } else {
+        // Firebase vacío — no hacer nada, mostrar lista vacía
+        S={kids:[],nextId:1};
       }
-      _fbReady=true;
-      setSyncOk();
+      document.getElementById('syncDot').classList.add('ok');
       render();
     });
   },200);
 }
 
-function sp(k){return k.expenses.reduce((a,e)=>a+e.amount,0);}
+function sp(k){return(k.expenses||[]).reduce((a,e)=>a+e.amount,0);}
 function re(k){return k.budget-sp(k);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ft(ts){const d=new Date(ts);return d.toLocaleDateString('es-MX',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});}
 function avIdx(id){return(id-1)%AV.length;}
 
 function renderTop(){
+  if(!S)return;
   const tR=S.kids.reduce((a,k)=>a+re(k),0);
   const tS=S.kids.reduce((a,k)=>a+sp(k),0);
   const tB=S.kids.reduce((a,k)=>a+k.budget,0);
@@ -214,6 +212,7 @@ function renderTop(){
 }
 
 function renderKids(){
+  if(!S){document.getElementById('kidsList').innerHTML='<div class="loading">⏳ Conectando...</div>';return;}
   if(S.kids.length===0){
     document.getElementById('kidsList').innerHTML=`
       <div class="empty-list">
@@ -408,7 +407,7 @@ function openExport(){
     lines.push('\n'+AV[avIdx(k.id)]+' '+k.name+' (presup. $'+k.budget+')');
     lines.push('   Gastado: $'+s.toFixed(2)+'  |  Resta: $'+r.toFixed(2));
     lines.push('   ['+bar+']');
-    k.expenses.forEach(e=>lines.push('   • '+e.cat+': $'+e.amount.toFixed(2)+(e.note?' ('+e.note+')':'')));
+    (k.expenses||[]).forEach(e=>lines.push('   • '+e.cat+': $'+e.amount.toFixed(2)+(e.note?' ('+e.note+')':'')));
   });
   const tS=S.kids.reduce((a,k)=>a+sp(k),0);
   const tR=S.kids.reduce((a,k)=>a+re(k),0);
@@ -454,7 +453,7 @@ function fcov(){document.getElementById('OC').innerHTML='';}
 function toast(m){const t=document.getElementById('toastEl');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
 function confirmReset(){
   if(confirm('¿Reiniciar completamente?\n\nSe borrarán todos los jugadores, gastos y presupuestos. Quedará como nueva.')){
-    S={kids:Array.from({length:9},(_,i)=>({id:i+1,name:'Jugador '+(i+1),budget:MAX,expenses:[]})),nextId:10};
+    S={kids:[],nextId:1};
     save();render();toast('App reiniciada');
   }
 }
