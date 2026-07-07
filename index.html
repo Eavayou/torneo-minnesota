@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -118,14 +118,17 @@ html,body{height:100%;background:#f0f4f0;font-family:-apple-system,BlinkMacSyste
 .toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 16px);left:50%;transform:translateX(-50%);background:rgba(30,30,28,.92);color:#fff;border-radius:var(--radius);padding:10px 20px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:90vw}
 .toast.show{opacity:1}
 .kid-count{font-size:11px;color:var(--text2);background:var(--gray);border-radius:var(--radius-full);padding:2px 8px;font-weight:600}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;margin-left:6px;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-left:6px;transition:background .5s}
+.sync-dot.ok{background:#4ade80}
+.loading{text-align:center;padding:60px 20px;color:var(--text2)}
+.loading-icon{font-size:40px;margin-bottom:12px;animation:spin 1.5s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="topbar"><div class="topbar-inner">
-    <div class="topbar-title">⚽ Torneo Minnesota 2025 <span class="sync-dot"></span></div>
+    <div class="topbar-title">⚽ Torneo Minnesota 2025 <span class="sync-dot" id="syncDot"></span></div>
     <div class="topbar-totals" id="topbar"></div>
   </div></div>
   <div class="toolbar">
@@ -139,7 +142,9 @@ html,body{height:100%;background:#f0f4f0;font-family:-apple-system,BlinkMacSyste
     </div>
   </div>
   <div style="height:4px"></div>
-  <div class="kids-list" id="kidsList"></div>
+  <div class="kids-list" id="kidsList">
+    <div class="loading"><div class="loading-icon">⚽</div><br>Cargando datos...</div>
+  </div>
 </div>
 <button class="fab" onclick="openExport()">↑ Exportar</button>
 <div id="OC"></div>
@@ -151,52 +156,42 @@ const AV=['⚽','🏆','🥅','👟','🎽','🧤','🥇','🌟','🔥','🎯','
 const CC={Comida:'#1D9E75',Entrada:'#185FA5',Transporte:'#BA7517',Tienda:'#8B5CF6',Otro:'#888780'};
 const CI={Comida:'🍔',Entrada:'🎟️',Transporte:'🚌',Tienda:'🛍️',Otro:'•••'};
 const CATS=['Comida','Entrada','Transporte','Tienda','Otro'];
-const LS_KEY='torneoMN25v5';
 
 let S={kids:Array.from({length:9},(_,i)=>({id:i+1,name:'Jugador '+(i+1),budget:MAX,expenses:[]})),nextId:10};
 let _saving=false;
-
-function lsSave(data){try{localStorage.setItem(LS_KEY,JSON.stringify(data));}catch(e){}}
-function lsLoad(){try{const d=localStorage.getItem(LS_KEY);return d?JSON.parse(d):null;}catch(e){return null;}}
+let _fbReady=false;
 
 function save(){
-  const data=JSON.parse(JSON.stringify(S));
-  lsSave(data);
-  if(!window._fbSet)return;
+  if(!window._fbSet){toast('Sin conexión, reintentando...');return;}
   _saving=true;
-  window._fbSet(data)
-    .catch(e=>console.error('Firebase error:',e))
-    .finally(()=>{setTimeout(()=>{_saving=false;},600);});
+  window._fbSet(JSON.parse(JSON.stringify(S)))
+    .then(()=>{setSyncOk();})
+    .catch(e=>{console.error('Firebase error:',e);toast('Error al guardar, intenta de nuevo');})
+    .finally(()=>{setTimeout(()=>{_saving=false;},800);});
+}
+
+function setSyncOk(){
+  const d=document.getElementById('syncDot');
+  if(d){d.classList.add('ok');}
 }
 
 function initFirebase(){
-  // Cargar localStorage inmediatamente
-  const local=lsLoad();
-  if(local){
-    S=local;
-    S.kids=S.kids.map(k=>({...k,expenses:k.expenses||[]}));
-    render();
-  }
-  // Luego conectar Firebase y sincronizar
   const poll=setInterval(()=>{
     if(!window._fbListen)return;
     clearInterval(poll);
+    // Primera lectura — esperar datos de Firebase antes de mostrar cualquier cosa
     window._fbListen(data=>{
       if(_saving)return;
-      if(data){
-        // Usar Firebase solo si es más reciente (más gastos o jugadores)
-        const fbTotal=(data.kids||[]).reduce((a,k)=>a+(k.expenses||[]).length,0);
-        const lsTotal=(S.kids||[]).reduce((a,k)=>a+(k.expenses||[]).length,0);
-        if(fbTotal>=lsTotal){
-          S=data;
-          S.kids=S.kids.map(k=>({...k,expenses:k.expenses||[]}));
-          lsSave(S);
-          render();
-        }
-      } else {
-        // Firebase vacío — subir datos locales
+      if(data&&data.kids){
+        S=data;
+        S.kids=S.kids.map(k=>({...k,expenses:k.expenses||[]}));
+      } else if(!_fbReady){
+        // Firebase vacío por primera vez — guardar estado inicial
         save();
       }
+      _fbReady=true;
+      setSyncOk();
+      render();
     });
   },200);
 }
